@@ -11,36 +11,34 @@ import getAddressCode from 'components/getAddressCode';
 
 const Home = () => {
   const mapRef = useMap();
-  const [datas, setDatas] = useState([]);
-  const [processedData, setProcessedData] = useState({});
-  const [isData, setIsData] = useState(false);
-  const [mainDatas, setMainDatas] = useState({});
-  const [isGeolocation, setIsGeolocation] = useState(false);
-  const [isMapLoad, setIsMapLoad] = useState(false);
+  const [datas, setDatas] = useState([]); // 그냥 불러온 데이터
+  const [processedData, setProcessedData] = useState({}); // 가공된 데이터
+  const [isData, setIsData] = useState(false); // 데이터가 불러와 졌는가?
+  const [mainDatas, setMainDatas] = useState({}); // 기본 geojson 데이터
+  const [isGeolocation, setIsGeolocation] = useState(false); // 위치 정보 사용 가능한가?
+  const [isMapLoad, setIsMapLoad] = useState(false); // 맵이 로드 됬는가?
   const geolocation = useGeolocation({
+    // 현재 실시간 위치를 담고있는 객체
     enableHighAccuracy: true,
   });
   const [cp, setCp] = useState({
-    // current position
     lng: null,
     lat: null,
-  });
-  const [isMarkerClick, setIsMarkerClick] = useState(false);
-  const [clickedMarkerData, setClickedMarkerData] = useState({});
-  const [isDirections, setIsDirections] = useState(false);
-  const [directionsDatas, setDirectionsDatas] = useState({});
-  const [isFocusing, setIsFoucsing] = useState(false);
+  }); // 현재 위치 데이터
+  const [isMarkerClick, setIsMarkerClick] = useState(false); // 마커 클릭 됬는가?
+  const [clickedMarkerData, setClickedMarkerData] = useState({}); // 클릭된 마커의 데이터
+  const [isDirections, setIsDirections] = useState(false); // 길찾기 활성화?
+  const [directionsDatas, setDirectionsDatas] = useState({}); // 길찾기 관련 데이터
+  const [isFocusing, setIsFoucsing] = useState(false); // 자동 포커싱
 
+  // 맵이 최초로 불러와지면 위치에 포커스합니다
   const onMapLoad = () => {
-    // 맵이 최초로 불러와지면 위치에 포커스합니다
     const { lng, lat } = cp;
     flyTo({ ref: mapRef, lng: lng, lat: lat });
     setIsMapLoad(true); // 맵 로드됨
-    // console.log(mapRef.current);
   };
-
+  // 지도 상에 있는 마커 클릭시
   const onClickMarker = e => {
-    // 지도 상에 있는 마커 클릭시
     const feature = e.features[0];
     if (feature) {
       const id = feature.layer.id;
@@ -50,15 +48,12 @@ const Home = () => {
           properties: { lng, lat, name, address, cityAddress }, // 표시자 및 청소자 이름 및 청소됨을 알리는 값
         } = feature;
         flyTo({ ref: mapRef, lng: lng, lat: lat });
-        // 길찾기 기능 활성화 하기
-        // 또한, 다른 길찾기 활성화시 없에기
         if (isDirections) {
+          // 목적지를 만약 활성화 했다면
           // 기존에 생성된 길찾기 및 데이터들을 없엔다
-          setIsMarkerClick(false);
-          setClickedMarkerData({});
-          setIsDirections(false); // 원래 값으로 되돌림
-          setIsFoucsing(false); // 자동 포커싱 비활성화함
+          directionsInit();
         }
+        // 길찾기 기능 활성화 하기
         setClickedMarkerData({
           lng: lng,
           lat: lat,
@@ -86,10 +81,9 @@ const Home = () => {
       });
     }
   };
-
+  // 길찾기
   const onClickDirections = async () => {
-    // 길찾기
-    const { lng, lat, name, address, cityAddress } = clickedMarkerData;
+    const { lng, lat } = clickedMarkerData;
     const start = [cp.lng, cp.lat];
     const end = [lng, lat];
     const data = await fetch(
@@ -111,29 +105,31 @@ const Home = () => {
     setIsFoucsing(true); // 자동 포커싱 활성화 함
     flyTo({ ref: mapRef, lat: cp.lat, lng: cp.lng }); // 또한, 자동 포커싱 해도 바로는 안되니 현재위치로 포커싱함!
   };
-
+  // 자동 줌 해제 및 활성화
+  // (이것 기능은 길찾기 시에도 활성화 됨)
   const onClickCp = () => {
-    // 자동 줌 해제 및 활성화
     if (isFocusing) {
       setIsFoucsing(false);
       return;
     }
     const { lng, lat } = cp;
     flyTo({ ref: mapRef, lng: lng, lat: lat });
-    setIsFoucsing(true); // zoom을 하며 자동 포커싱 함
-    // (0): 나침 반 같이 정렬하기!!
+    setIsFoucsing(true); // zoom을 하며 자동 포커싱 활성화 함
   };
-
-  const onClickCancelDirections = () => {
-    // 길찾기 취소
-    setIsMarkerClick(false);
-    setClickedMarkerData({});
+  // 길찾기에 사용되는 클릭된 마커의 길찾기 관련 데이터 초기화
+  const directionsInit = () => {
+    setIsMarkerClick(false); // 원래 값으로 되돌림
+    setClickedMarkerData({}); // 값 초기화
     setIsDirections(false); // 원래 값으로 되돌림
     setIsFoucsing(false); // 자동 포커싱 비활성화함
   };
+  // 길찾기 취소
+  const onClickCancelDirections = () => {
+    directionsInit();
+  };
 
+  // 현재 위치 구하기 (실시간)
   useEffect(() => {
-    // 현재 위치 구하기 (실시간)
     const { longitude, latitude } = geolocation;
     const { lng, lat } = cp;
     const isDifferent = longitude != lng && latitude != lat; // 변경된 위치인지 구하는 변수
@@ -159,9 +155,8 @@ const Home = () => {
       }
     }
   }, [geolocation]);
-
+  // 오픈 API의 데이터 가져오기
   useEffect(() => {
-    // 데이터 가져오기
     const request = async () => {
       // 여기서 법정동 주소를 가져와야 함
       const addressName = await getAddressName({ position: cp });
@@ -206,9 +201,8 @@ const Home = () => {
       request();
     }
   }, [isGeolocation]);
-
+  // 데이터를 가공하기 (1차)
   useEffect(() => {
-    // 데이터를 가공하기
     const processedData = [];
     datas.map(a => {
       const { lng, lat, name, address, cityAddress } = a;
@@ -230,9 +224,8 @@ const Home = () => {
     });
     setProcessedData(processedData);
   }, [datas]);
-
+  // 데이터 2차 가공하기 (데이터를 geojson으로 바꾸어 지도에 뿌리기)
   useEffect(() => {
-    // 데이터 2차 가공하기 (데이터를 geojson으로 바꾸어 지도에 뿌리기)
     setMainDatas({
       type: 'FeatureCollection',
       features: processedData,
@@ -241,22 +234,28 @@ const Home = () => {
     // console.log(mainDatas);
   }, [processedData]);
 
-  // JSX
+  // 위치 데이터 및 오픈 API의 데이터가 가져와야 지여만 지도를 로드함
   return isGeolocation && isData ? (
     <FullScreen>
-      {isMarkerClick ? <div>{clickedMarkerData.name}</div> : ''}
+      {isMarkerClick ? (
+        // 마커만 클릭한다면 그 시설의 이름이 뜨게 됨
+        <Modal>
+          <h1>목적지: {clickedMarkerData.name}</h1>
+        </Modal>
+      ) : (
+        ''
+      )}
       <Maps
         ref={mapRef}
-        onClick={onClickMarker}
-        interactiveLayerIds={[cluster.id, countCuster.id, layer.id]}
+        onClick={onClickMarker} // 마커 클릭시
+        interactiveLayerIds={[cluster.id, countCuster.id, layer.id]} // 마커들의 id를 로드해야 클릭 이벤트를 받을 수 있음
         onLoad={onMapLoad}
       >
         <SourceWrapper>
-          {/* isMainDatasLoad는 없어도 됨 왜냐면 기본 데이터가 {}이기에 로드 되지 아니함!*/}
           <Source
             id="datas"
             type="geojson"
-            data={mainDatas}
+            data={mainDatas} // 어차피 데이터가 이미 불러와져 있어서 이런식으로 처리해도 상관 무 (데이터가 있는가? 라는 로직은 최상단에 존재함)
             cluster={true}
             clusterMaxZoom={14}
             clusterRadius={50}
@@ -266,7 +265,7 @@ const Home = () => {
             <Layer {...cluster} />
           </Source>
           {isDirections ? (
-            // 이게 초기화 해야하기에 이렇게 로직을 구성한 것임
+            // 길찾기 가이드 선은 계속해서 변동하기에 이런식으로 토글로 구성한 것임 (길찾기 시에만 길찾기 가이드 선이 표시됨)
             <Source id="directionsDatas" type="geojson" data={directionsDatas}>
               <Layer {...lineLayer}></Layer>
             </Source>
@@ -276,15 +275,16 @@ const Home = () => {
         </SourceWrapper>
         <ButtonWrapper>
           {isMarkerClick ? (
+            // 마커 클릭시
             <>
-              <Button onClick={onClickCancelDirections}>cancel</Button>
-              <Button onClick={onClickDirections}>directions</Button>
+              <Button onClick={onClickCancelDirections}>길찾기 취소하기</Button>
+              <Button onClick={onClickDirections}>길찾기</Button>
             </>
           ) : (
             ''
           )}
           <Button onClick={onClickCp}>
-            {isFocusing ? 'unfocusing' : 'focusing'}
+            {isFocusing ? '현위치 추적 비활성화' : '현위치 추적 활성화'}
           </Button>
         </ButtonWrapper>
         <MarkerWrapper>
@@ -297,7 +297,7 @@ const Home = () => {
       </Maps>
     </FullScreen>
   ) : (
-    'loading'
+    'loading...'
   );
 };
 
@@ -314,6 +314,10 @@ const FullScreen = styled.div`
   .mapboxgl-ctrl-attrib {
     display: none;
   }
+`;
+const Modal = styled.div`
+  position: absolute;
+  z-index: 1;
 `;
 const SourceWrapper = styled.div``;
 const ButtonWrapper = styled.div`
