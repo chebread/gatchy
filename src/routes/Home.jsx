@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { Layer, Source, useMap, Marker } from 'react-map-gl';
 import styled from 'styled-components';
 import Maps from 'routes/Maps';
-import { layer, cluster, countCuster } from 'components/layers';
+import { layer, cluster, countCuster, lineLayer } from 'components/layers';
 import flyTo from 'components/flyTo';
 import useGeolocation from 'react-hook-geolocation';
-import MapboxDirections from '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions';
 
 const Home = () => {
   const mapRef = useMap();
@@ -21,6 +20,12 @@ const Home = () => {
     lng: null,
     lat: null,
   });
+  const [isMarkerClick, setIsMarkerClick] = useState(false);
+  const [clickedMarkerData, setClickedMarkerData] = useState({});
+  const [isDirections, setIsDirections] = useState(false);
+  const [directionsDatas, setDirectionsDatas] = useState({});
+  const [isFocusing, setIsFoucsing] = useState(false);
+
   useEffect(() => {
     const { longitude, latitude } = geolocation;
     const { lng, lat } = cp;
@@ -37,7 +42,14 @@ const Home = () => {
       if (!isGeolocation) {
         setIsGeolocation(true);
       }
-      // 자동으로 포커싱 안함
+      // 자동 포커싱 true시에만 자동 포커싱 함!
+      if (isMapLoad) {
+        if (isFocusing) {
+          // alert('zoom foucsing!');
+          flyTo({ ref: mapRef, lng: longitude, lat: latitude });
+          // (0): 나침 반 같이 정렬하기!!
+        }
+      }
     }
   }, [geolocation]);
   const onMapLoad = () => {
@@ -48,49 +60,57 @@ const Home = () => {
     console.log(mapRef.current);
   };
   const onClickCp = () => {
-    // 수동으로 포커싱 함
+    // 클릭시 자동 줌 포커싱 하며 클릭하지 않을시 자동 노줌 포커싱함
+    if (isFocusing) {
+      setIsFoucsing(false);
+      return;
+    }
     const { lng, lat } = cp;
     flyTo({ ref: mapRef, lng: lng, lat: lat });
+    setIsFoucsing(true); // zoom을 하며 자동 포커싱 함
+    // (0): 나침 반 같이 정렬하기!!
   };
   useEffect(() => {
-    const request = async () => {
-      const rawDatas = [];
-      let pageNo = 0;
-      while (1) {
-        pageNo++;
-        const API_KEY = process.env.REACT_APP_OPEN_API_KEY;
-        const url = `http://apis.data.go.kr/1741000/HeatWaveShelter2/getHeatWaveShelterList2?serviceKey=${API_KEY}&type=json&year=2022&areaCd=30230&pageNo=${pageNo}`;
-        // (1): 구로 분류하여 데이터 가져오기!
-        const data = await fetch(url).then(data => data.json());
-        const rawData = [];
-        if (data.RESULT) {
-          // RESULT를 가지면 에러가 발생한다는 것임
-          break;
-        } else {
-          const raw = data.HeatWaveShelter[1].row;
-          raw.map(a => {
-            const { lo, la, restaddr, areaNm, restname } = a;
-            if ((lo, la, restaddr, areaNm, restname)) {
-              const newRawData = {
-                lng: lo,
-                lat: la,
-                address: restaddr, //대전광역시 대덕구  비래서로  42   (비래동, 삼호아파트)
-                cityAddress: areaNm, // 대전광역시 대덕구 비래동
-                name: restname, // 삼호(아)경로당
-              };
-              rawData.push(newRawData);
-            }
-          });
-          rawDatas.push(...rawData);
+    if (isGeolocation) {
+      const request = async () => {
+        const rawDatas = [];
+        let pageNo = 0;
+        while (1) {
+          pageNo++;
+          const API_KEY = process.env.REACT_APP_OPEN_API_KEY;
+          const url = `http://apis.data.go.kr/1741000/HeatWaveShelter2/getHeatWaveShelterList2?serviceKey=${API_KEY}&type=json&year=2022&areaCd=30230&pageNo=${pageNo}`;
+          // (1): 구로 분류하여 데이터 가져오기!
+          const data = await fetch(url).then(data => data.json());
+          const rawData = [];
+          if (data.RESULT) {
+            // RESULT를 가지면 에러가 발생한다는 것임
+            break;
+          } else {
+            const raw = data.HeatWaveShelter[1].row;
+            raw.map(a => {
+              const { lo, la, restaddr, areaNm, restname } = a;
+              if ((lo, la, restaddr, areaNm, restname)) {
+                const newRawData = {
+                  lng: lo,
+                  lat: la,
+                  address: restaddr, //대전광역시 대덕구  비래서로  42   (비래동, 삼호아파트)
+                  cityAddress: areaNm, // 대전광역시 대덕구 비래동
+                  name: restname, // 삼호(아)경로당
+                };
+                rawData.push(newRawData);
+              }
+            });
+            rawDatas.push(...rawData);
+          }
+          setDatas([...datas, ...rawDatas]);
         }
-        setDatas([...datas, ...rawDatas]);
-      }
-    };
-    request();
-  }, []);
+      };
+      request();
+    }
+    // 여기서 마커를 로드해야함
+  }, [isGeolocation]);
   useEffect(() => {
     // 데이터 뿌리기!
-    // (2): 하나하나의 데이터 geojson의 자손으로 바꾸기
     const processedData = [];
     datas.map(a => {
       const { lng, lat, name, address, cityAddress } = a;
@@ -132,6 +152,22 @@ const Home = () => {
         } = feature;
         flyTo({ ref: mapRef, lng: lng, lat: lat });
         // 길찾기 기능 활성화 하기
+        // 또한, 다른 길찾기 활성화시 없에기
+        if (isDirections) {
+          // 기존에 생성된 길찾기 및 데이터들을 없엔다
+          setIsMarkerClick(false);
+          setClickedMarkerData({});
+          setIsDirections(false); // 원래 값으로 되돌림
+          setIsFoucsing(false); // 자동 포커싱 비활성화함
+        }
+        setClickedMarkerData({
+          lng: lng,
+          lat: lat,
+          name: name,
+          address: address,
+          cityAddress: cityAddress,
+        });
+        setIsMarkerClick(true);
         return;
       }
       // 클러스터 포커싱!
@@ -151,9 +187,42 @@ const Home = () => {
       });
     }
   };
+  const onClickDirections = async () => {
+    // 길찾기
+    const { lng, lat, name, address, cityAddress } = clickedMarkerData;
+    const start = [cp.lng, cp.lat];
+    const end = [lng, lat];
+    const data = await fetch(
+      `https://api.mapbox.com/directions/v5/mapbox/walking/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${process.env.REACT_APP_MAPBOX_API_KEY}`,
+      { method: 'GET' }
+    ).then(data => data.json());
+    console.log(data);
+    // 라인 그릴 데이터로 변환하기
+    const routes = data.routes[0].geometry.coordinates;
+    const directionDatas = [...routes];
+    setDirectionsDatas({
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: [...directionDatas],
+      },
+    }); // 라인 데이터 완료
+    setIsDirections(true); // 길찾기 수행함
+    setIsFoucsing(true); // 자동 포커싱 활성화 함
+    flyTo({ ref: mapRef, lat: cp.lat, lng: cp.lng }); // 또한, 자동 포커싱 해도 바로는 안되니 현재위치로 포커싱함!
+  };
+  const onClickCancelDirections = () => {
+    // 길찾기 취소
+    setIsMarkerClick(false);
+    setClickedMarkerData({});
+    setIsDirections(false); // 원래 값으로 되돌림
+    setIsFoucsing(false); // 자동 포커싱 비활성화함
+  };
   return isData ? (
     isGeolocation ? (
       <FullScreen>
+        {isMarkerClick ? <div>{clickedMarkerData.name}</div> : ''}
         <Maps
           ref={mapRef}
           onClick={onClickMarker}
@@ -161,6 +230,7 @@ const Home = () => {
           onLoad={onMapLoad}
         >
           <SourceWrapper>
+            {/* isMainDatasLoad는 없어도 됨 왜냐면 기본 데이터가 {}이기에 로드 되지 아니함!*/}
             <Source
               id="datas"
               type="geojson"
@@ -173,9 +243,31 @@ const Home = () => {
               <Layer {...countCuster} />
               <Layer {...cluster} />
             </Source>
+            {isDirections ? (
+              // 이게 초기화 해야하기에 이렇게 로직을 구성한 것임
+              <Source
+                id="directionsDatas"
+                type="geojson"
+                data={directionsDatas}
+              >
+                <Layer {...lineLayer}></Layer>
+              </Source>
+            ) : (
+              ''
+            )}
           </SourceWrapper>
           <ButtonWrapper>
-            <Button onClick={onClickCp}>focusing</Button>
+            {isMarkerClick ? (
+              <>
+                <Button onClick={onClickCancelDirections}>cancel</Button>
+                <Button onClick={onClickDirections}>directions</Button>
+              </>
+            ) : (
+              ''
+            )}
+            <Button onClick={onClickCp}>
+              {isFocusing ? 'unfocusing' : 'focusing'}
+            </Button>
           </ButtonWrapper>
           <MarkerWrapper>
             <Marker
@@ -221,3 +313,8 @@ const Button = styled.button`
 `;
 const MarkerWrapper = styled.div``;
 export default Home;
+
+//isMarkerClick시 그냥 목적지를 상단에 뿌리기!
+// useEffect(() => {
+//   // 원래는 여기서 가져옴
+// }, []);

@@ -16,7 +16,7 @@ const Maps = forwardRef(
         onLoad={onLoad}
         mapboxAccessToken={MAPBOX_API_KEY}
         initialViewState={initView}
-        mapStyle="mapbox://styles/haneum/cl99rd3ef000m14rwpw8mlhgb" // 사용자 정의 style
+        mapStyle="mapbox://styles/haneum/cl9gr9fbp000714qq7bo1bqvq" // mapbox://styles/haneum/cl9grk81g000z15qs17mxc5ya
         onClick={onClick}
         interactiveLayerIds={interactiveLayerIds}
       >
