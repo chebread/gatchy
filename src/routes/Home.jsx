@@ -8,8 +8,6 @@ import useGeolocation from 'react-hook-geolocation';
 import toast from 'react-hot-toast';
 import getAddressName from 'components/getAddressName';
 import getAddressCode from 'components/getAddressCode';
-import SvgMarker from 'icons/SvgMarker';
-import SvgHome from 'icons/SvgHome';
 
 const Home = () => {
   const mapRef = useMap();
@@ -343,6 +341,7 @@ const Button = styled.button`
   margin: 15px;
 `;
 const MarkerWrapper = styled.div``;
+// 현재위치 마커
 const MarkerPing = styled.div`
   height: 20px;
   width: 20px;
@@ -350,6 +349,22 @@ const MarkerPing = styled.div`
   opacity: 0.9;
   border-radius: 50%;
   border: white solid 2.5px;
-  box-shadow: 0 0 0 2px #f00;
+  box-shadow: 0 0 0 0 #f00;
+  animation: pulse 1.7s infinite;
+  // -webkit-animation 사용안해도됨!
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+      -moz-box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+    }
+    70% {
+      box-shadow: 0 0 0 15px rgba(255, 107, 107, 0.4);
+      -moz-box-shadow: 0 0 0 15px rgba(255, 107, 107, 0.4);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+      -moz-box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+    }
+  }
 `;
 export default Home;
