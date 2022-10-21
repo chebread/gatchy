@@ -11,7 +11,7 @@ import getAddressCode from 'components/getAddressCode';
 
 const Home = () => {
   const mapRef = useMap();
-  const [datas, setDatas] = useState([]); // 그냥 불러온 데이터
+  const [datas, setDatas] = useState([]); // 날것으로 불러온 데이터
   const [processedData, setProcessedData] = useState({}); // 가공된 데이터
   const [isData, setIsData] = useState(false); // 데이터가 불러와 졌는가?
   const [mainDatas, setMainDatas] = useState({}); // 기본 geojson 데이터
@@ -341,6 +341,7 @@ const Button = styled.button`
   margin: 15px;
 `;
 const MarkerWrapper = styled.div``;
+
 // 현재위치 마커
 const MarkerPing = styled.div`
   height: 20px;
