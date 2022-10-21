@@ -8,6 +8,8 @@ import useGeolocation from 'react-hook-geolocation';
 import toast from 'react-hot-toast';
 import getAddressName from 'components/getAddressName';
 import getAddressCode from 'components/getAddressCode';
+import SvgMarker from 'icons/SvgMarker';
+import SvgHome from 'icons/SvgHome';
 
 const Home = () => {
   const mapRef = useMap();
@@ -300,7 +302,7 @@ const Home = () => {
             longitude={cp.lng}
             anchor="center" // popup을 위한 anchor
           >
-            <MarkerPin className="pulse"></MarkerPin>
+            <MarkerPing />
           </Marker>
         </MarkerWrapper>
       </Maps>
@@ -309,7 +311,6 @@ const Home = () => {
     'loading...'
   );
 };
-
 // Styling
 const FullScreen = styled.div`
   position: relative;
@@ -342,12 +343,13 @@ const Button = styled.button`
   margin: 15px;
 `;
 const MarkerWrapper = styled.div``;
-const MarkerPin = styled.div`
-  height: 27.5px;
-  width: 27.5px;
+const MarkerPing = styled.div`
+  height: 20px;
+  width: 20px;
   background-color: #f03e3e;
   opacity: 0.9;
   border-radius: 50%;
   border: white solid 2.5px;
+  box-shadow: 0 0 0 2px #f00;
 `;
 export default Home;
