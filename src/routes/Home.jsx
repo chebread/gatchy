@@ -127,6 +127,11 @@ const Home = () => {
   const onClickCancelDirections = () => {
     directionsInit();
   };
+  // 현재 위치 마커 클릭시 현재 위치 포커싱
+  const onClickCpMarker = () => {
+    const { lng, lat } = cp;
+    flyTo({ ref: mapRef, lng: lng, lat: lat });
+  };
 
   // 현재 위치 구하기 (실시간)
   useEffect(() => {
@@ -290,9 +295,12 @@ const Home = () => {
         <MarkerWrapper>
           <Marker
             // 현위치 마커
+            onClick={onClickCpMarker}
             latitude={cp.lat}
             longitude={cp.lng}
-          />
+          >
+            <MarkerPin className="pulse"></MarkerPin>
+          </Marker>
         </MarkerWrapper>
       </Maps>
     </FullScreen>
@@ -333,5 +341,12 @@ const Button = styled.button`
   margin: 15px;
 `;
 const MarkerWrapper = styled.div``;
-
+const MarkerPin = styled.div`
+  height: 27.5px;
+  width: 27.5px;
+  background-color: #f03e3e;
+  opacity: 0.9;
+  border-radius: 50%;
+  border: white solid 2.5px;
+`;
 export default Home;

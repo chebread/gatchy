@@ -4,9 +4,9 @@ const layer = {
   type: 'circle',
   filter: ['!', ['has', 'point_count']],
   paint: {
-    'circle-radius': 10,
+    'circle-radius': 15,
     'circle-opacity': 0.9,
-    'circle-color': '#f03e3e',
+    'circle-color': '#2f9e44',
   },
 };
 const cluster = {

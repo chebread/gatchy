@@ -6,6 +6,7 @@ const getAddressCode = async ({ name }) => {
   const sido = row.sido_cd; // 30 (대전시)
   const sgg = row.sgg_cd; // 230 (대덕구)
   const addressCode = `${sido}${sgg}`; // 30 + 230 => 30230
+  console.log(addressCode);
   return addressCode;
 };
 
