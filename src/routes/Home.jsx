@@ -187,6 +187,7 @@ const Home = () => {
             const { lo, la, restaddr, areaNm, restname } = a;
             if ((lo, la, restaddr, areaNm, restname)) {
               const newRawData = {
+                // 이것이 가져온 데이터들
                 lng: lo,
                 lat: la,
                 address: restaddr, // 대전광역시 대덕구  비래서로  42   (비래동, 삼호아파트)
@@ -206,7 +207,7 @@ const Home = () => {
       request();
     }
   }, [isGeolocation]);
-  // 데이터를 가공하기 (1차)
+  // 데이터를 가공하기 (geojson의 자손으로 만들기)
   useEffect(() => {
     const processedData = [];
     datas.map(a => {
@@ -229,7 +230,7 @@ const Home = () => {
     });
     setProcessedData(processedData);
   }, [datas]);
-  // 데이터 2차 가공하기 (데이터를 geojson으로 바꾸어 지도에 뿌리기)
+  // 데이터 2차 가공하기 (데이터를 완전한 geojson으로 바꾸어 지도에 뿌리기)
   useEffect(() => {
     setMainDatas({
       type: 'FeatureCollection',
@@ -241,6 +242,7 @@ const Home = () => {
 
   // 위치 데이터 및 오픈 API의 데이터가 가져와야 지여만 지도를 로드함
   return isGeolocation && isData ? (
+    // 여기는 데이터 및 현재위치를 모두 사용할 수 있는 환경임
     <FullScreen>
       {isMarkerClick ? (
         // 마커만 클릭한다면 그 시설의 이름이 뜨게 됨
