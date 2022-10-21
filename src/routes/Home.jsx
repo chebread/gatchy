@@ -107,7 +107,7 @@ const Home = () => {
   };
   // 자동 줌 해제 및 활성화
   // (이것 기능은 길찾기 시에도 활성화 됨)
-  const onClickCp = () => {
+  const onClickCpFocus = () => {
     if (isFocusing) {
       setIsFoucsing(false);
       return;
@@ -127,8 +127,8 @@ const Home = () => {
   const onClickCancelDirections = () => {
     directionsInit();
   };
-  // 현재 위치 마커 클릭시 현재 위치 포커싱
-  const onClickCpMarker = () => {
+  // 현재 위치 추적이 아닌 그저 현재위치를 구함
+  const onClickCp = () => {
     const { lng, lat } = cp;
     flyTo({ ref: mapRef, lng: lng, lat: lat });
   };
@@ -288,16 +288,17 @@ const Home = () => {
           ) : (
             ''
           )}
-          <Button onClick={onClickCp}>
+          <Button onClick={onClickCpFocus}>
             {isFocusing ? '현위치 추적 비활성화' : '현위치 추적 활성화'}
           </Button>
+          <Button onClick={onClickCp}>현위치</Button>
         </ButtonWrapper>
         <MarkerWrapper>
           <Marker
             // 현위치 마커
-            onClick={onClickCpMarker}
             latitude={cp.lat}
             longitude={cp.lng}
+            anchor="center" // popup을 위한 anchor
           >
             <MarkerPin className="pulse"></MarkerPin>
           </Marker>
